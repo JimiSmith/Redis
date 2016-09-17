@@ -141,9 +141,11 @@ public protocol Commands {
 extension Commands {
 
 	private func send(command: String) throws -> Any? {
-		try conn.send(command)
-        
-		let response = try String(data: try conn.receive(upTo: 65536))
+		try conn.write(command)
+
+        var data: Data = Data()
+        _ = try conn.read(into: &data, length: 65536)
+        let response = try String(data: data)
 
 		return try Parser.readResponse(response)
 	}
@@ -376,7 +378,7 @@ extension Commands {
 			result = try send(command:"SPOP \(key)\r\n")
 
 		case .SRANDMEMBER(let key, let count):
-			result = try send(command:"SRANDMEMBER \(key) \(count != nil ? String(count) : "")\r\n")
+			result = try send(command:"SRANDMEMBER \(key) \(count != nil ? String(describing: count) : "")\r\n")
 
 		case .SREM(let key, let members):
 			let newMembers = members.quoteItems()
@@ -593,10 +595,10 @@ extension Commands {
 
     public func pipeline(watch: [String] = [], discards: Bool, pipe: () throws -> Void) throws -> Any? {
 		if watch.count > 0 {
-			try send(command:"WATCH \(watch.joined(separator: " "))\r\n")
+			_ = try send(command:"WATCH \(watch.joined(separator: " "))\r\n")
 		}
 
-		try send(command:"MULTI\r\n")
+		_ = try send(command:"MULTI\r\n")
         
         if discards {
             do {

@@ -9,7 +9,7 @@ extension String {
     }
 }
 
-public enum ResponseError: ErrorProtocol {
+public enum ResponseError: Error {
 	case invalidResponse(byte: Character, response: String)
 	case serverError(error: String)
 
